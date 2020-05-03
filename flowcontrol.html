@@ -1,0 +1,87 @@
+<script type="text/javascript">
+    RED.nodes.registerType('flowcontrolIn',{
+        category: 'common',
+        color: '#32a852',
+        defaults: {
+            topic:          {value:""},
+            context:        {value:""},
+            version:        {value:true},
+            name:           {value:""}
+        },
+        inputs:1,
+        outputs:0,
+        icon: "batch.svg",
+        label: function() {return this.name||this.topic||"Flow Control In";}
+    });
+</script>
+<script type="text/html" data-template-name="flowcontrolIn">
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i> Topics</label>
+        <input type="text" id="node-input-topic" placeholder="topic1,topic2">
+    </div>
+    <div class="form-row">
+        <label for="node-input-context"><i class="fa fa-tag"></i> Context</label>
+        <input type="text" id="node-input-context" placeholder="Context">
+    </div>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-version" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-version" style="width: auto"> Add Version</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Pretty Name">
+    </div>
+</script>
+<script type="text/html" data-help-name="flowcontrolIn">
+    <p>A simple node that routes messages</p>
+</script>
+
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('flowcontrolOut',{
+        category: 'common',
+        color: '#32a852',
+        defaults: {
+            topic:          {value:""},
+            context:        {value:""},
+            retained:       {value:false},
+            blTopic:        {value:""},
+            blObj:          {value:""},
+            name:           {value:""}
+        },
+        inputs:0,
+        outputs:1,
+        icon: "join.svg",
+        label: function() {return this.name||this.topic||"Flow Control Out";}
+    });
+</script>
+<script type="text/html" data-template-name="flowcontrolOut">
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i> Topics</label>
+        <input type="text" id="node-input-topic" placeholder="topic1,topic2... | *">
+    </div>
+    <div class="form-row">
+        <label for="node-input-context"><i class="fa fa-tag"></i> Context</label>
+        <input type="text" id="node-input-context" placeholder="Context">
+    </div>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-retained" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-retained" style="width: auto"> Block Retained Messages</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-blTopic"><i class="fa fa-tag"></i> Blacklist Topics</label>
+        <input type="text" id="node-input-blTopic" placeholder="topic1,topic2...">
+    </div>
+    <div class="form-row">
+        <label for="node-input-blObj"><i class="fa fa-tag"></i> Blacklist Objects</label>
+        <input type="text" id="node-input-blObj" placeholder="obj1,obj2...">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Pretty Name">
+    </div>
+</script>
+<script type="text/html" data-help-name="flowcontrolOut">
+    <p>A simple node that routes messages</p>
+</script>
