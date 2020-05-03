@@ -1,12 +1,22 @@
 {
-    "name": "node-red-contrib-flowcontrol",
-    "description": "MQTT Style Message Router",
-    "version": "0.0.1",
-    "node-red": {
-        "nodes": {
-            "flowcontrol": "flowcontrol.js"
-        }
-    },
-    "author": "Calvin Köcher",
-    "license": "MIT"
+  "name": "@calkoe/node-red-contrib-flowcontrol",
+  "description": "MQTT Style Message Router",
+  "keywords":"node-red",
+  "version": "0.0.5",
+  "node-red": {
+    "nodes": {
+      "flowcontrol": "flowcontrol.js"
+    }
+  },
+  "author": "Calvin Köcher",
+  "license": "MIT",
+  "main": "flowcontrol.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/calkoe/node-red-contrib-flowcontrol.git"
+  },
+  "bugs": {
+    "url": "https://github.com/calkoe/node-red-contrib-flowcontrol/issues"
+  },
+  "homepage": "https://github.com/calkoe/node-red-contrib-flowcontrol#readme"
 }

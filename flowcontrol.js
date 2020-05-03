@@ -1,3 +1,4 @@
+//npm publish --access public
 const match = function (filter, topic) {
     const filterArray = filter.split('/')
     const length = filterArray.length
@@ -25,12 +26,18 @@ module.exports = function(RED) {
             }
 
             //Conext
+            if(config.context)
             if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
+
+            //Storage
+            var g  = this.context().global.get(config.topic)||{};
+            for(var o in msg.payload) g[o] = [msg.payload[o],new Date];
+            this.context().global.set(config.topic,g);
 
             //Send
             if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {};}msg.payload.Context = config.context;
             for(var t of config.topic.split(","))
-                RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version,"time":Date.now()});
+                RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version,"time":new Date});
        
         });
     }
@@ -50,6 +57,7 @@ module.exports = function(RED) {
             if(!checkTopic(config.topic.split(","),msg.topic)) return;
 
             //Context
+            if(config.context)
             if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
             
             //Retained
