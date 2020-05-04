@@ -7,7 +7,7 @@ const match = function (filter, topic) {
         var left = filterArray[i]
         var right = topicArray[i]
         if (left === '#') return topicArray.length >= length - 1
-        if (left !== '*' && left !== right) return false
+        if (left !== '+' && left !== right) return false
     }
     return length === topicArray.length
 };
@@ -16,7 +16,7 @@ module.exports = function(RED) {
 
     function flowcontrolIn(config){
         RED.nodes.createNode(this,config);
-        var node        = this;
+        var node = this;
         node.on('input', function(msg){
 
             //Version
@@ -40,13 +40,14 @@ module.exports = function(RED) {
             //Send
             for(var t of (config.topic||msg.topic).split(","))
                 RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version,"time":new Date});
+        
         });
     }
     RED.nodes.registerType("flowcontrolIn",flowcontrolIn);
 
     function flowcontrolOut(config) {
         RED.nodes.createNode(this,config);
-        var node        = this;
+        var node = this;
         var checkTopic = function(topics,topic){
             for(var t of topics)
                 if(match(t, topic)) return true; else continue;
