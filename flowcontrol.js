@@ -25,20 +25,21 @@ module.exports = function(RED) {
                 msg.version.push(JSON.parse(JSON.stringify(msg)));
             }
 
-            //Conext
+            //Check Context
             if(config.context)
             if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
 
-            //Storage
+            //Add to Storage
             var g  = this.context().global.get(config.topic)||{};
             for(var o in msg.payload) g[o] = [msg.payload[o],new Date];
             this.context().global.set(config.topic,g);
 
-            //Send
+            //Set Context
             if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {};}msg.payload.Context = config.context;
-            for(var t of config.topic.split(","))
+
+            //Send
+            for(var t of (config.topic||msg.topic).split(","))
                 RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version,"time":new Date});
-       
         });
     }
     RED.nodes.registerType("flowcontrolIn",flowcontrolIn);
@@ -54,6 +55,7 @@ module.exports = function(RED) {
         var handler = function(msg){
             
             //Topic
+            if(config.topic)
             if(!checkTopic(config.topic.split(","),msg.topic)) return;
 
             //Context
@@ -61,12 +63,15 @@ module.exports = function(RED) {
             if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
             
             //Retained
-            if(config.retained && msg.version && msg.version[0].retain) return;
+            if(config.retained)
+            if(msg.version && msg.version[0].retain) return;
 
             //Blacklist Topic
+            if(config.blTopic)
             if(checkTopic(config.blTopic.split(","),msg.topic)) return;
 
             //Blacklist Obj
+            if(config.blObj)
             for(var o of config.blObj.split(","))
                 if(o in msg.payload) return;
 
