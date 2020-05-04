@@ -81,7 +81,4 @@ module.exports = function(RED) {
         RED.events.on("flowcontrolLoop",handler);
     }
     RED.nodes.registerType("flowcontrolOut",flowcontrolOut);
-
-
-
 }
