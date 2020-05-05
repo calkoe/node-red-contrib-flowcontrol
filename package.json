@@ -1,5 +1,5 @@
 {
-  "name": "@calkoe/node-red-contrib-flowcontrol",
+  "name": "node-red-contrib-flowcontrol",
   "description": "MQTT Style Message Router",
   "keywords":"node-red",
   "version": "0.0.7",
