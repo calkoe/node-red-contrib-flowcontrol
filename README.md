@@ -3,16 +3,18 @@
 
 **Features:**
 * Topic based Message routing
-* MQTT sytle routing wildcards (+ and #)
+* MQTT style routing wildcards (+ and #)
 * Message objs saved to global context
 * Context based Loop blocking
 * Topic and Obj Blacklists
 * seamless MQTT and Homekit integration
 
-<img src="img/a.png"/>
+<img src="img/a.png" width="500"/>
 
 **Node: Output**
-<img src="img/c.png"/>
+
+<img src="img/c.png" width="300"/>
 
 **Node: INPUT**
-<img src="img/b.png"/>
+
+<img src="img/b.png" width="300"/>
