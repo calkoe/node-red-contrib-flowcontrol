@@ -1,4 +1,8 @@
-//npm publish --access public
+//  npm publish --access public
+//  git add .
+//  git commit
+//  git push
+
 const match = function (filter, topic) {
     const filterArray = filter.split('/')
     const length = filterArray.length
@@ -12,47 +16,57 @@ const match = function (filter, topic) {
     return length === topicArray.length
 };
 
+const checkTopic = function(topics,topic){
+    for(var t of topics)
+        if(match(t, topic)) return true; else continue;
+    return false
+}
+
+const store = function (global,topic,payload){
+    var g  = global.get(topic)||{};
+    for(var o in payload) g[o] = [payload[o],new Date];
+    global.set(topic,g);
+}
+
 module.exports = function(RED) {
 
+    //NODE IN
     function flowcontrolIn(config){
         RED.nodes.createNode(this,config);
         var node = this;
         node.on('input', function(msg){
 
-            //Version
-            if(config.version){
-                if(!msg.version){msg.version = [];}
-                msg.version.push(JSON.parse(JSON.stringify(msg)));
-            }
-
-            //Check Context
+            //Deny Context
             if(config.context)
             if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
-
-            //Add to Storage
-            var g  = this.context().global.get(config.topic)||{};
-            for(var o in msg.payload) g[o] = [msg.payload[o],new Date];
-            this.context().global.set(config.topic,g);
-
+            
             //Set Context
-            if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {};}msg.payload.Context = config.context;
+            if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}msg.payload.Context = config.context;
 
-            //Send
-            for(var t of (config.topic||msg.topic).split(","))
-                RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version,"time":new Date});
+             //Version
+             if(config.version){
+                if(!msg.version){msg.version = [];}
+                var copy = JSON.parse(JSON.stringify(msg));
+                delete copy.version;
+                copy.time = new Date;
+                msg.version.push(copy);
+            }
+
+            //Add to Storage and Send
+            for(var t of (config.topic||msg.topic).split(",")){
+                store(this.context().global,t,msg.payload);
+                RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version});
+            }
         
         });
     }
     RED.nodes.registerType("flowcontrolIn",flowcontrolIn);
 
+
+    //NODE OUT
     function flowcontrolOut(config) {
         RED.nodes.createNode(this,config);
         var node = this;
-        var checkTopic = function(topics,topic){
-            for(var t of topics)
-                if(match(t, topic)) return true; else continue;
-            return false
-        }
         var handler = function(msg){
             
             //Topic
@@ -74,11 +88,12 @@ module.exports = function(RED) {
             //Blacklist Obj
             if(config.blObj)
             for(var o of config.blObj.split(","))
-                if(o in msg.payload) return;
+                if(o in msg.payload) delete msg.payload[o];
 
             node.send(msg);
         }
         RED.events.on("flowcontrolLoop",handler);
     }
     RED.nodes.registerType("flowcontrolOut",flowcontrolOut);
+
 }
