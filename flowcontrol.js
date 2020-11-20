@@ -1,3 +1,4 @@
+//  Change Version
 //  npm publish --access public
 //  git add .
 //  git commit
@@ -38,13 +39,23 @@ module.exports = function(RED) {
 
             //Deny Context
             if(config.context)
-            if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
+            if((msg.payload||{}).context == config.context || (msg.hap||{}).context == config.context) return;
+
+            //Deny Blacklist Topic
+            if(config.blTopic)
+            if(checkTopic(config.blTopic.split(","),msg.topic)) return;
+
+            //Deny Blacklist Obj
+            if(config.blObj)
+            for(var o of config.blObj.split(","))
+                if(o in msg.payload) delete msg.payload[o];
             
             //Set Context
-            if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}msg.payload.Context = config.context;
+            if(config.context)
+            if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}msg.payload.context = config.context;
 
-             //Version
-             if(config.version){
+            //Set Version
+            if(config.version){
                 if(!msg.version){msg.version = [];}
                 var copy = JSON.parse(JSON.stringify(msg));
                 delete copy.version;
@@ -69,26 +80,26 @@ module.exports = function(RED) {
         var node = this;
         var handler = function(msg){
             
-            //Topic
+            //Deny Topic
             if(config.topic)
             if(!checkTopic(config.topic.split(","),msg.topic)) return;
 
-            //Context
+            //Deny Context
             if(config.context)
-            if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
-            
-            //Retained
-            if(config.retained)
-            if(msg.version && msg.version[0].retain) return;
+            if((msg.payload||{}).context == config.context || (msg.hap||{}).context == config.context) return;
 
-            //Blacklist Topic
+            //Deny Blacklist Topic
             if(config.blTopic)
             if(checkTopic(config.blTopic.split(","),msg.topic)) return;
 
-            //Blacklist Obj
+            //Deny Blacklist Obj
             if(config.blObj)
             for(var o of config.blObj.split(","))
                 if(o in msg.payload) delete msg.payload[o];
+            
+            //Deny Retained
+            if(config.retained)
+            if(msg.version && msg.version[0].retain) return;
 
             node.send(msg);
         }
