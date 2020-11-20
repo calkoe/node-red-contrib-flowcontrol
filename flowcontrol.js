@@ -26,6 +26,7 @@ const checkTopic = function(topics,topic){
 const store = function (global,topic,payload){
     var g  = global.get(topic)||{};
     for(var o in payload) g[o] = [payload[o],new Date];
+    g["_lastSeen"] = new Date;
     global.set(topic,g);
 }
 
@@ -35,24 +36,31 @@ module.exports = function(RED) {
     function flowcontrolIn(config){
         RED.nodes.createNode(this,config);
         var node = this;
-        node.on('input', function(msg){
+        node.counter  = 0;
+        node.on('input', function(org){
 
-            //Deny Context
-            if(config.context)
-            if((msg.payload||{}).context == config.context || (msg.hap||{}).context == config.context) return;
+            var msg = JSON.parse(JSON.stringify(org));
 
-            //Deny Blacklist Topic
-            if(config.blTopic)
-            if(checkTopic(config.blTopic.split(","),msg.topic)) return;
+            ///////EQUAL
+                //Deny Context
+                if(config.context)
+                    if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
 
-            //Deny Blacklist Obj
-            if(config.blObj)
-            for(var o of config.blObj.split(","))
-                if(o in msg.payload) delete msg.payload[o];
-            
-            //Set Context
-            if(config.context)
-            if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}msg.payload.context = config.context;
+                //Deny Blacklist Topic
+                if(config.blTopic)
+                    if(checkTopic(config.blTopic.split(","),msg.topic)) return;
+
+                //Deny Blacklist Obj
+                if(config.blObj)
+                    for(var o of config.blObj.split(","))
+                        if(o in msg.payload) delete msg.payload[o];
+                
+                //Set Context
+                if(config.context){
+                    if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
+                    msg.payload.Context = config.context;
+                }
+            ///////
 
             //Set Version
             if(config.version){
@@ -67,6 +75,9 @@ module.exports = function(RED) {
             for(var t of (config.topic||msg.topic).split(",")){
                 store(this.context().global,t,msg.payload);
                 RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version});
+                //Status
+                node.counter++;
+                node.status({fill:"blue",shape:"dot",text:node.counter});
             }
         
         });
@@ -77,30 +88,49 @@ module.exports = function(RED) {
     //NODE OUT
     function flowcontrolOut(config) {
         RED.nodes.createNode(this,config);
-        var node = this;
-        var handler = function(msg){
-            
+        var node    = this;
+        node.counter = 0;
+        var handler = function(org){
+
+            var msg = JSON.parse(JSON.stringify(org));
+
+            //EMERGENCY ANTO LOOP SWITCH
+            //if(node.counter > 3) return;
+
             //Deny Topic
             if(config.topic)
-            if(!checkTopic(config.topic.split(","),msg.topic)) return;
+                if(!checkTopic(config.topic.split(","),msg.topic)) return;
+            
+            ///////EQUAL
+                //Deny Context
+                if(config.context)
+                    if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
 
-            //Deny Context
-            if(config.context)
-            if((msg.payload||{}).context == config.context || (msg.hap||{}).context == config.context) return;
+                //Deny Blacklist Topic
+                if(config.blTopic)
+                    if(checkTopic(config.blTopic.split(","),msg.topic)) return;
 
-            //Deny Blacklist Topic
-            if(config.blTopic)
-            if(checkTopic(config.blTopic.split(","),msg.topic)) return;
-
-            //Deny Blacklist Obj
-            if(config.blObj)
-            for(var o of config.blObj.split(","))
-                if(o in msg.payload) delete msg.payload[o];
+                //Deny Blacklist Obj
+                if(config.blObj)
+                    for(var o of config.blObj.split(","))
+                        if(o in msg.payload) delete msg.payload[o];
+                
+                //Set Context
+                if(config.context){
+                    if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
+                    msg.payload.Context = config.context;
+                }
+            ///////
             
             //Deny Retained
             if(config.retained)
-            if(msg.version && msg.version[0].retain) return;
+                if(msg.version && msg.version[0].retain) return;
 
+            //Status
+            node.counter++;
+            node.status({fill:"blue",shape:"dot",text:node.counter});
+
+            //Send
             node.send(msg);
         }
         RED.events.on("flowcontrolLoop",handler);
