@@ -4,6 +4,8 @@
 //  git commit
 //  git push
 
+//  git add . && git commit && git push && npm publish --access public
+
 const match = function (filter, topic) {
     const filterArray = filter.split('/')
     const length = filterArray.length
@@ -37,9 +39,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node = this;
         node.counter  = 0;
-        node.on('input', function(org){
-
-            var msg = JSON.parse(JSON.stringify(org));
+        node.on('input', function(msg){
 
             ///////EQUAL
                 //Deny Context
@@ -54,6 +54,9 @@ module.exports = function(RED) {
                 if(config.blObj)
                     for(var o of config.blObj.split(","))
                         if(o in msg.payload) delete msg.payload[o];
+
+                //Copy Message
+                msg = JSON.parse(JSON.stringify(msg));
                 
                 //Set Context
                 if(config.context){
@@ -90,12 +93,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node    = this;
         node.counter = 0;
-        var handler = function(org){
-
-            var msg = JSON.parse(JSON.stringify(org));
-
-            //EMERGENCY ANTO LOOP SWITCH
-            //if(node.counter > 3) return;
+        var handler = function(msg){
 
             //Deny Topic
             if(config.topic)
@@ -114,6 +112,9 @@ module.exports = function(RED) {
                 if(config.blObj)
                     for(var o of config.blObj.split(","))
                         if(o in msg.payload) delete msg.payload[o];
+
+                //Copy Message
+                msg = JSON.parse(JSON.stringify(msg));
                 
                 //Set Context
                 if(config.context){
