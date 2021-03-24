@@ -8,7 +8,7 @@
 
 const match = function (filter, topic) {
     const filterArray = filter.split('/')
-    const length = filterArray.length
+    const length = filterArray.length;
     const topicArray = topic.split('/')
     for (var i = 0; i < length; ++i) {
         var left = filterArray[i]
@@ -37,8 +37,8 @@ module.exports = function(RED) {
     //NODE IN
     function flowcontrolIn(config){
         RED.nodes.createNode(this,config);
-        var node = this;
-        node.counter  = 0;
+        var node       = this;
+        node.counter   = 0;
         node.on('input', function(msg){
 
             ///////EQUAL
@@ -89,53 +89,65 @@ module.exports = function(RED) {
 
 
     //NODE OUT
+    var deployed        = false;
+    var deployedConfig  = {};
+    var deployedNode    = {};
+    var deployedHandler = function(msg){
+        config = deployedConfig;
+        node   = deployedNode;
+
+        //Deny Topic
+        if(config.topic)
+            if(!checkTopic(config.topic.split(","),msg.topic)) return;
+        
+        ///////EQUAL
+            //Deny Context
+            if(config.context)
+                if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
+
+            //Deny Blacklist Topic
+            if(config.blTopic)
+                if(checkTopic(config.blTopic.split(","),msg.topic)) return;
+
+            //Deny Blacklist Obj
+            if(config.blObj)
+                for(var o of config.blObj.split(","))
+                    if(o in msg.payload) delete msg.payload[o];
+
+            //Copy Message
+            msg = JSON.parse(JSON.stringify(msg));
+            
+            //Set Context
+            if(config.context){
+                if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
+                msg.payload.Context = config.context;
+            }
+        ///////
+        
+        //Deny Retained
+        if(config.retained)
+            if(msg.version && msg.version[0].retain) return;
+
+        //Status
+        node.counter++;
+        node.status({fill:"blue",shape:"dot",text:node.counter});
+
+        //Send
+        node.send(msg);
+    };  
+
     function flowcontrolOut(config) {
         RED.nodes.createNode(this,config);
-        var node    = this;
-        node.counter = 0;
-        var handler = function(msg){
-
-            //Deny Topic
-            if(config.topic)
-                if(!checkTopic(config.topic.split(","),msg.topic)) return;
-            
-            ///////EQUAL
-                //Deny Context
-                if(config.context)
-                    if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
-
-                //Deny Blacklist Topic
-                if(config.blTopic)
-                    if(checkTopic(config.blTopic.split(","),msg.topic)) return;
-
-                //Deny Blacklist Obj
-                if(config.blObj)
-                    for(var o of config.blObj.split(","))
-                        if(o in msg.payload) delete msg.payload[o];
-
-                //Copy Message
-                msg = JSON.parse(JSON.stringify(msg));
-                
-                //Set Context
-                if(config.context){
-                    if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
-                    msg.payload.Context = config.context;
-                }
-            ///////
-            
-            //Deny Retained
-            if(config.retained)
-                if(msg.version && msg.version[0].retain) return;
-
-            //Status
-            node.counter++;
-            node.status({fill:"blue",shape:"dot",text:node.counter});
-
-            //Send
-            node.send(msg);
+        var node        = this;
+        node.counter    = 0;
+        deployedConfig  = config;
+        deployedNode    = node;
+        if(!deployed){
+            RED.events.on("flowcontrolLoop",deployedHandler);
+            deployed = true;
         }
-        RED.events.on("flowcontrolLoop",handler);
     }
+
     RED.nodes.registerType("flowcontrolOut",flowcontrolOut);
 
 }
