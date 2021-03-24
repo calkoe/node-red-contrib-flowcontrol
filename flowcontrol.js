@@ -34,6 +34,8 @@ const store = function (global,topic,payload){
 
 module.exports = function(RED) {
 
+    var nodes = {};
+
     //NODE IN
     function flowcontrolIn(config){
         RED.nodes.createNode(this,config);
@@ -44,7 +46,7 @@ module.exports = function(RED) {
             ///////EQUAL
                 //Deny Context
                 if(config.context)
-                    if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
+                    if((msg.Context === config.context || msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
 
                 //Deny Blacklist Topic
                 if(config.blTopic)
@@ -60,8 +62,8 @@ module.exports = function(RED) {
                 
                 //Set Context
                 if(config.context){
-                    if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
-                    msg.payload.Context = config.context;
+                    if(msg.payload && typeof msg.payload === 'object') msg.payload.Context = config.context;
+                    msg.Context = config.context;                        
                 }
             ///////
 
@@ -75,35 +77,44 @@ module.exports = function(RED) {
             }
 
             //Add to Storage and Send
-            for(var t of (config.topic||msg.topic).split(",")){
-                store(this.context().global,t,msg.payload);
-                RED.events.emit("flowcontrolLoop",{"payload":msg.payload,"topic":t,"version":msg.version});
-                //Status
-                node.counter++;
-                node.status({fill:"blue",shape:"dot",text:node.counter});
+            if(config.topic||msg.topic){
+                for(var t of (config.topic||msg.topic).split(",")){
+                    store(this.context().global,t,msg.payload);
+    
+                    //Find Target Topics
+                    for (id in nodes) {
+                        if(nodes[id].config.topic && checkTopic(nodes[id].config.topic.split(","),t)) flowcontrolOutHandler(msg,nodes[id]);
+                    }
+    
+                    //Status
+                    node.counter++;
+                    node.status({fill:"blue",shape:"dot",text:node.counter});
+                }
+            }else{
+                node.status({fill:"red",shape:"dot",text:"No topic defined!"});
             }
         
         });
     }
+
     RED.nodes.registerType("flowcontrolIn",flowcontrolIn);
 
 
     //NODE OUT
-    var deployed        = false;
-    var deployedConfig  = {};
-    var deployedNode    = {};
-    var deployedHandler = function(msg){
-        config = deployedConfig;
-        node   = deployedNode;
+    function flowcontrolOut(config) {
+        RED.nodes.createNode(this,config);
+        this.counter            = 0;
+        this.config             = config;
+        nodes[this.id]          = this;
+    }
 
-        //Deny Topic
-        if(config.topic)
-            if(!checkTopic(config.topic.split(","),msg.topic)) return;
+    function flowcontrolOutHandler(msg,node){
+        var config = node.config;
         
         ///////EQUAL
             //Deny Context
             if(config.context)
-                if((msg.payload||{}).Context == config.context || (msg.hap||{}).context == config.context) return;
+                if(msg.Context === config.context || (msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
 
             //Deny Blacklist Topic
             if(config.blTopic)
@@ -135,18 +146,6 @@ module.exports = function(RED) {
         //Send
         node.send(msg);
     };  
-
-    function flowcontrolOut(config) {
-        RED.nodes.createNode(this,config);
-        var node        = this;
-        node.counter    = 0;
-        deployedConfig  = config;
-        deployedNode    = node;
-        if(!deployed){
-            RED.events.on("flowcontrolLoop",deployedHandler);
-            deployed = true;
-        }
-    }
 
     RED.nodes.registerType("flowcontrolOut",flowcontrolOut);
 
