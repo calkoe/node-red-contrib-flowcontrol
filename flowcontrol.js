@@ -44,6 +44,10 @@ module.exports = function(RED) {
         node.on('input', function(msg){
 
         ///////EQUAL
+
+            //Copy Message
+            msg = JSON.parse(JSON.stringify(msg));
+
             //Deny Context
             if(config.context)
                 if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
@@ -57,14 +61,12 @@ module.exports = function(RED) {
                 for(var o of config.blObj.split(","))
                     if(o in msg.payload) delete msg.payload[o];
 
-            //Copy Message
-            msg = JSON.parse(JSON.stringify(msg));
-            
             //Set Context
             if(config.context){
                 if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
                 msg.payload.Context = config.context;
             }
+
         ///////
 
             //Set Version
@@ -83,7 +85,7 @@ module.exports = function(RED) {
     
                     //Find Target Topics
                     for (id in nodes) {
-                        if(nodes[id].config.topic && checkTopic(nodes[id].config.topic.split(","),t)) flowcontrolOutHandler(msg,nodes[id]);
+                        if(t && nodes[id].config.topic && checkTopic(nodes[id].config.topic.split(","),t)) flowcontrolOutHandler(msg,nodes[id]);
                     }
     
                     //Status
@@ -110,8 +112,12 @@ module.exports = function(RED) {
 
     function flowcontrolOutHandler(msg,node){
         var config = node.config;
-        
+
         ///////EQUAL
+
+            //Copy Message
+            msg = JSON.parse(JSON.stringify(msg));
+
             //Deny Context
             if(config.context)
                 if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
@@ -125,14 +131,12 @@ module.exports = function(RED) {
                 for(var o of config.blObj.split(","))
                     if(o in msg.payload) delete msg.payload[o];
 
-            //Copy Message
-            msg = JSON.parse(JSON.stringify(msg));
-            
             //Set Context
             if(config.context){
-                if(!msg.payload || typeof msg.payload !== 'object'){msg.payload = {value:msg.payload};}
+                if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
                 msg.payload.Context = config.context;
             }
+            
         ///////
         
         //Deny Retained

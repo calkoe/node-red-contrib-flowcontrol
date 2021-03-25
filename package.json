@@ -2,7 +2,7 @@
   "name": "node-red-contrib-flowcontrol",
   "description": "MQTT Style Message Router",
   "keywords":["node-red","mqtt","flowcontrol","loop","routing"],
-  "version": "0.1.6",
+  "version": "0.1.7",
   "node-red": {
     "nodes": {
       "flowcontrol": "flowcontrol.js"
