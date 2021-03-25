@@ -1,7 +1,7 @@
 //  Change Version
 //  npm publish --access public
 //  git add .
-//  git commit
+//  git commit -m fix
 //  git push
 
 //  git add . && git commit && git push && npm publish --access public
@@ -43,29 +43,29 @@ module.exports = function(RED) {
         node.counter   = 0;
         node.on('input', function(msg){
 
-            ///////EQUAL
-                //Deny Context
-                if(config.context)
-                    if((msg.Context === config.context || msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
+        ///////EQUAL
+            //Deny Context
+            if(config.context)
+                if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
 
-                //Deny Blacklist Topic
-                if(config.blTopic)
-                    if(checkTopic(config.blTopic.split(","),msg.topic)) return;
+            //Deny Blacklist Topic
+            if(config.blTopic)
+                if(checkTopic(config.blTopic.split(","),msg.topic)) return;
 
-                //Deny Blacklist Obj
-                if(config.blObj)
-                    for(var o of config.blObj.split(","))
-                        if(o in msg.payload) delete msg.payload[o];
+            //Deny Blacklist Obj
+            if(config.blObj)
+                for(var o of config.blObj.split(","))
+                    if(o in msg.payload) delete msg.payload[o];
 
-                //Copy Message
-                msg = JSON.parse(JSON.stringify(msg));
-                
-                //Set Context
-                if(config.context){
-                    if(msg.payload && typeof msg.payload === 'object') msg.payload.Context = config.context;
-                    msg.Context = config.context;                        
-                }
-            ///////
+            //Copy Message
+            msg = JSON.parse(JSON.stringify(msg));
+            
+            //Set Context
+            if(config.context){
+                if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
+                msg.payload.Context = config.context;
+            }
+        ///////
 
             //Set Version
             if(config.version){
@@ -114,7 +114,7 @@ module.exports = function(RED) {
         ///////EQUAL
             //Deny Context
             if(config.context)
-                if(msg.Context === config.context || (msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
+                if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
 
             //Deny Blacklist Topic
             if(config.blTopic)
