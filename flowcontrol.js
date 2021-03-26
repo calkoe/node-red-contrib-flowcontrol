@@ -4,6 +4,8 @@
 //  git commit -m fix
 //  git push
 
+//  https://github.com/calkoe/node-red-contrib-flowcontrol
+
 //  git add . && git commit && git push && npm publish --access public
 
 const match = function (filter, topic) {
@@ -48,9 +50,12 @@ module.exports = function(RED) {
             //Copy Message
             msg = JSON.parse(JSON.stringify(msg));
 
+            //Make Object
+            if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
+
             //Deny Context
             if(config.context)
-                if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
+                if(msg.payload.Context === config.context || (msg.hap||{}).context === config.context) return;
 
             //Deny Blacklist Topic
             if(config.blTopic)
@@ -63,7 +68,6 @@ module.exports = function(RED) {
 
             //Set Context
             if(config.context){
-                if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
                 msg.payload.Context = config.context;
             }
 
@@ -118,9 +122,12 @@ module.exports = function(RED) {
             //Copy Message
             msg = JSON.parse(JSON.stringify(msg));
 
+            //Make Object
+            if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
+
             //Deny Context
             if(config.context)
-                if((msg.payload||{}).Context === config.context || (msg.hap||{}).context === config.context) return;
+                if(msg.payload.Context === config.context || (msg.hap||{}).context === config.context) return;
 
             //Deny Blacklist Topic
             if(config.blTopic)
@@ -133,10 +140,9 @@ module.exports = function(RED) {
 
             //Set Context
             if(config.context){
-                if(!msg.payload || typeof msg.payload !== 'object') msg.payload = {value:msg.payload};
                 msg.payload.Context = config.context;
             }
-            
+
         ///////
         
         //Deny Retained
